@@ -61,13 +61,12 @@ class DataUnifier:
 # BLOQUE DE EJECUCIÓN PRINCIPAL
 # ==============================================================================
 if __name__ == "__main__":
-    # Definimos las rutas de los archivos generados previamente
-    origen_peru = "noticias_larepublica.csv"
-    origen_usa = "noticias_nyt.csv"
-    destino_final = "base_noticias_politicas.csv"
+    import os
+    dir_actual = os.path.dirname(__file__)
     
-    # Instanciamos la clase unificadora
+    origen_peru = os.path.join(dir_actual, "noticias_larepublica.csv")
+    origen_usa = os.path.join(dir_actual, "noticias_nyt.csv")
+    destino_final = os.path.join(dir_actual, "base_noticias_politicas.csv")
+    
     unificador = DataUnifier(origen_peru, origen_usa, destino_final)
-    
-    # Ejecutamos la consolidación de datos
     unificador.integrar_datasets()

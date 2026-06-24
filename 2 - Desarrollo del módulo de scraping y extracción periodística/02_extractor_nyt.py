@@ -100,7 +100,10 @@ if __name__ == "__main__":
         df_nyt = pd.DataFrame(datos_nyt)
         df_nyt.insert(0, 'id_noticia', range(1, len(df_nyt) + 1))
         
-        nombre_archivo = "noticias_nyt.csv"
+        import os
+        directorio_actual = os.path.dirname(__file__)
+        nombre_archivo = os.path.join(directorio_actual, "noticias_nyt.csv")
+        
         df_nyt.to_csv(nombre_archivo, index=False, encoding='utf-8-sig')
         print(f"\n[ÉXITO] Base de datos internacional guardada como: '{nombre_archivo}'")
     else:

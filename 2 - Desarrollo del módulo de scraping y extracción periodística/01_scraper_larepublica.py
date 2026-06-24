@@ -134,7 +134,10 @@ if __name__ == "__main__":
             # Creamos un ID único correlativo para cada fila
             df.insert(0, 'id_noticia', range(1, len(df) + 1))
             
-            nombre_archivo = "noticias_larepublica.csv"
+            import os
+            directorio_actual = os.path.dirname(__file__)
+            nombre_archivo = os.path.join(directorio_actual, "noticias_larepublica.csv")
+            
             df.to_csv(nombre_archivo, index=False, encoding='utf-8-sig')
             print(f"\n[ÉXITO] Base de datos cruda guardada correctamente como: '{nombre_archivo}'")
     else:
