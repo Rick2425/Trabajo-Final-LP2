@@ -18,4 +18,7 @@
 <ul>
   <li>Quispe Garcia, Francisco Alberto (panchop35) (20240729) </li>
 </ul>
+<ul>
+  <li>Tuppia Paitan, Joaquin Francisco (JTPXD) (20241405) </li>
+</ul>
 </ul> 
