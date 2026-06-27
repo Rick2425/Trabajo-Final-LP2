@@ -13,12 +13,8 @@
 <h3> <b>Integrantes del equipo:</b> </h3>
 
 <ul>
-  <li>Cardenas Panduro, Ricardo Gabriel (Rick2425) (20241376) </li>
+  <li>Cardenas Panduro, Ricardo Gabriel (Rick2425) (20241376)</li>
+  <li>Meza Mitma, Liz Maritza (MezaLiz96) (20220771)</li>
+  <li>Quispe Garcia, Francisco Alberto (panchop35) (20240729)</li>
+  <li>Tuppia Paitan, Joaquin Francisco (JTPXD) (20241405)</li>
 </ul>
-  <li>Meza Mitma, Liz Maritza (MezaLiz96) (20220771) </li>
-<ul>
-  <li>Quispe Garcia, Francisco Alberto (panchop35) (20240729) </li>
-<ul>
-  <li>Tuppia Paitan, Joaquin Francisco (JTPXD) (20241405) </li>
-</ul>
-</ul> 
