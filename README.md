@@ -15,6 +15,7 @@
 <ul>
   <li>Cardenas Panduro, Ricardo Gabriel (Rick2425) (20241376) </li>
 </ul>
+  <li>Meza Mitma, Liz Maritza (MezaLiz96) (20220771) </li>
 <ul>
   <li>Quispe Garcia, Francisco Alberto (panchop35) (20240729) </li>
 </ul>
