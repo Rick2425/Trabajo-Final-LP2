@@ -1,0 +1,1541 @@
+---
+title: "Plano de resultados"
+lang: es
+format:
+  html:
+    theme: flatly
+    toc: true
+    toc-title: "Contenido"
+    toc-depth: 3
+    number-sections: false
+    smooth-scroll: true
+    code-fold: true
+    code-summary: "Mostrar código"
+    code-copy: true
+    embed-resources: true
+    page-layout: full
+    fig-align: center
+    df-print: paged
+    link-external-newwindow: true
+
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r setup}
+# ============================================================
+# 1. DEPENDENCIAS
+# ============================================================
+
+if (!require("pacman")) {
+  install.packages("pacman")
+}
+
+pacman::p_load(
+  tidyverse,
+  readr,
+  stringr,
+  scales,
+  plotly,
+  DT,
+  htmltools,
+  tidytext,
+  lubridate,
+  stopwords
+)
+
+# ============================================================
+# 2. CONFIGURACIÓN GENERAL
+# ============================================================
+
+ruta_logo <- "logo_unalm.png"
+
+# Paleta alineada al informe y al dashboard de noticias
+verde_oscuro <- "#004d2e"
+verde_medio  <- "#006b3f"
+verde_claro  <- "#178f5d"
+verde_suave  <- "#35a873"
+gris_texto   <- "#1f2933"
+gris_muted   <- "#5b6770"
+fondo_suave  <- "#f4f8f6"
+borde_suave  <- "#d7e8df"
+
+paleta_verde <- c(
+  "#004d2e", "#006b3f", "#178f5d", "#35a873", "#5cc08b",
+  "#82d3a5", "#a7e3bf", "#c8efd6", "#e0f7e9", "#f1fbf5"
+)
+
+paleta_discreta <- function(x) {
+  niveles <- unique(as.character(x))
+  setNames(rep(paleta_verde, length.out = length(niveles)), niveles)
+}
+
+colores_polaridad <- c(
+  "positivo" = "#006b3f",
+  "negativo" = "#8b3a3a",
+  "neutro" = "#52616b",
+  "neutral" = "#52616b",
+  "mixto" = "#178f5d"
+)
+```
+
+```{css}
+:root {
+  --verde: #004d2e;
+  --verde-2: #006b3f;
+  --verde-3: #178f5d;
+  --fondo: #f4f8f6;
+  --tarjeta: #ffffff;
+  --borde: #d7e8df;
+  --texto: #1f2933;
+  --gris: #5b6770;
+}
+
+body {
+  background: var(--fondo);
+  color: var(--texto);
+  line-height: 1.62;
+}
+
+h1, h2, h3 {
+  color: var(--verde);
+  font-weight: 800;
+}
+
+.quarto-title-block {
+  display: none;
+}
+
+.cover {
+  max-width: 1180px;
+  margin: 0 auto 1.3rem auto;
+  padding: 1.9rem;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #ffffff 0%, #f2faf5 100%);
+  border: 1px solid var(--borde);
+  box-shadow: 0 8px 24px rgba(0, 77, 46, 0.08);
+  text-align: center;
+}
+
+.cover h1 {
+  font-size: 1.65rem;
+  letter-spacing: 1px;
+  margin-bottom: 0.25rem;
+}
+
+.cover h2 {
+  font-size: 1.02rem;
+  color: #335346;
+  margin-top: 0;
+}
+
+.cover-logo {
+  width: 132px;
+  height: 132px;
+  object-fit: contain;
+  margin: 0.9rem auto;
+  display: block;
+}
+
+.cover-title {
+  font-size: 1.32rem;
+  font-weight: 900;
+  color: var(--verde);
+  text-transform: uppercase;
+  line-height: 1.35;
+  margin-top: 1rem;
+}
+
+.cover-subtitle {
+  color: var(--gris);
+  font-size: 0.95rem;
+  margin-top: 0.5rem;
+}
+
+.dashboard-header {
+  background: linear-gradient(135deg, var(--verde), var(--verde-2));
+  color: white;
+  padding: 1.6rem 1.8rem;
+  border-radius: 20px;
+  box-shadow: 0 10px 28px rgba(0, 77, 46, 0.22);
+  margin-bottom: 1.2rem;
+}
+
+.dashboard-header h1 {
+  color: white;
+  margin: 0;
+  font-size: 1.75rem;
+}
+
+.dashboard-header p {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.95rem;
+  opacity: 0.94;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.42rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.17);
+  border: 1px solid rgba(255,255,255,0.28);
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.9rem;
+  margin-bottom: 1.2rem;
+}
+
+.card {
+  background: var(--tarjeta);
+  border-radius: 16px;
+  padding: 1rem;
+  border: 1px solid var(--borde);
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.045);
+  min-height: 96px;
+}
+
+.card .label {
+  font-size: 0.75rem;
+  color: var(--gris);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 0.45rem;
+}
+
+.card .num {
+  font-size: 1.6rem;
+  line-height: 1.1;
+  color: var(--verde);
+  font-weight: 900;
+  word-break: break-word;
+}
+
+.card .hint {
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--gris);
+}
+
+.section-box {
+  background: var(--tarjeta);
+  border: 1px solid var(--borde);
+  border-radius: 18px;
+  padding: 1.15rem;
+  margin-bottom: 1.2rem;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.04);
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.section-box h2 {
+  margin-top: 0;
+  margin-bottom: 0.25rem;
+  font-size: 1.35rem;
+}
+
+.section-box .desc {
+  margin-top: 0;
+  color: var(--gris);
+  font-size: 0.9rem;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+  gap: 1rem;
+  align-items: stretch;
+  max-width: 100%;
+}
+
+.grid-stack {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  max-width: 100%;
+}
+
+.grid-stack .subcard {
+  width: 100%;
+}
+
+.table-card .dataTables_wrapper,
+.table-card table.dataTable {
+  width: 100% !important;
+}
+
+.grid-equal {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  max-width: 100%;
+}
+
+.subcard {
+  border: 1px solid #e1eee7;
+  border-radius: 14px;
+  padding: 0.8rem;
+  background: #fbfdfc;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.subcard h3 {
+  margin-top: 0;
+  margin-bottom: 0.55rem;
+  color: var(--verde);
+  font-size: 1rem;
+}
+
+/* Ajuste de tablas para que no sobresalgan del margen del informe */
+.table-responsive,
+.dataTables_wrapper,
+.datatables,
+.html-widget,
+.widgetframe {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+.dataTables_wrapper table,
+table.dataTable {
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: auto !important;
+  border-collapse: collapse !important;
+}
+
+table.dataTable th,
+table.dataTable td {
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  font-size: 0.78rem !important;
+  line-height: 1.28 !important;
+  padding: 0.42rem 0.5rem !important;
+  vertical-align: top !important;
+}
+
+/* Tablas cortas: evita que términos como "fraude" o "encuadre" se partan letra por letra */
+table.dataTable.tabla-nowrap th,
+table.dataTable.tabla-nowrap td {
+  white-space: nowrap !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+}
+
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+  max-width: 100% !important;
+  white-space: normal !important;
+  font-size: 0.78rem !important;
+}
+
+.dataTables_wrapper input,
+.dataTables_wrapper select {
+  max-width: 100% !important;
+}
+
+.plotly,
+.plotly.html-widget,
+.js-plotly-plot {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+
+.interpretacion,
+.observacion,
+.nota-metodo {
+  background: #eef8f2;
+  border-left: 5px solid var(--verde-2);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  color: #284238;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin-top: 0.8rem;
+}
+
+.interpretacion h4,
+.observacion h4,
+.nota-metodo h4 {
+  margin-top: 0;
+  color: var(--verde);
+}
+
+.footer {
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.8rem;
+  margin-top: 1rem;
+  padding: 1rem 0 0.5rem 0;
+}
+
+
+@media (max-width: 1100px) {
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid-2,
+  .grid-equal {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .cover {
+    padding: 1.4rem;
+  }
+
+  .dashboard-header {
+    padding: 1.3rem;
+  }
+}
+```
+
+```{r carga-datos}
+# ============================================================
+# 3. CARGA LOCAL DE DATOS
+# ============================================================
+
+buscar_archivo <- function(nombre_archivo) {
+  rutas_posibles <- c(
+    nombre_archivo,
+    file.path(".", nombre_archivo),
+    file.path("data", nombre_archivo),
+    file.path("data", "raw", nombre_archivo),
+    file.path("data", "processed", nombre_archivo),
+    file.path("..", nombre_archivo),
+    file.path("..", "data", nombre_archivo),
+    file.path("..", "data", "raw", nombre_archivo),
+    file.path("..", "data", "processed", nombre_archivo),
+    file.path("..", "..", nombre_archivo),
+    file.path("..", "..", "data", nombre_archivo),
+    file.path("..", "..", "data", "raw", nombre_archivo),
+    file.path("..", "..", "data", "processed", nombre_archivo),
+    file.path("..", "..", "..", nombre_archivo),
+    file.path("..", "..", "..", "data", nombre_archivo),
+    file.path("..", "..", "..", "data", "raw", nombre_archivo),
+    file.path("..", "..", "..", "data", "processed", nombre_archivo)
+  )
+
+  rutas_existentes <- rutas_posibles[file.exists(rutas_posibles)]
+
+  if (length(rutas_existentes) == 0) {
+    stop(
+      paste0(
+        "No se encontró el archivo: ", nombre_archivo, "\n\n",
+        "Carpeta actual de Quarto:\n",
+        getwd(), "\n\n",
+        "Solución rápida: coloca el archivo en la misma carpeta del QMD o corrige la ruta."
+      )
+    )
+  }
+
+  rutas_existentes[1]
+}
+
+ruta_tokens <- buscar_archivo("tabla_tokens_dashboard.csv")
+datos <- read_csv(ruta_tokens, show_col_types = FALSE)
+
+datos <- datos %>%
+  mutate(
+    lema = as.character(lema),
+    token = as.character(token),
+    encuadre = as.character(encuadre),
+    subencuadre = as.character(subencuadre),
+    polaridad_encuadre = as.character(polaridad_encuadre),
+    titulo_video = as.character(titulo_video),
+    medio = as.character(medio),
+    video_id = as.character(video_id),
+    id_comentario_tm = as.character(id_comentario_tm),
+    likes_comentario = suppressWarnings(as.numeric(likes_comentario)),
+    total_respuestas = suppressWarnings(as.numeric(total_respuestas)),
+    peso_encuadre = suppressWarnings(as.numeric(peso_encuadre))
+  ) %>%
+  mutate(
+    likes_comentario = replace_na(likes_comentario, 0),
+    total_respuestas = replace_na(total_respuestas, 0),
+    peso_encuadre = replace_na(peso_encuadre, 0),
+    titulo_limpio = str_squish(titulo_video),
+    titulo_corto = str_trunc(titulo_limpio, width = 42),
+    titulo_corto = str_wrap(titulo_corto, width = 24)
+  )
+
+terminos_base <- datos %>%
+  filter(!is.na(lema), lema != "") %>%
+  filter(tipo_match == "token" | is.na(tipo_match))
+
+terminos_encuadre <- datos %>%
+  filter(!is.na(encuadre), encuadre != "")
+
+terminos_por_comentario <- terminos_base %>%
+  count(
+    id_comentario_tm,
+    video_id,
+    titulo_video,
+    titulo_corto,
+    medio,
+    name = "n_terminos"
+  )
+
+resumen_extension <- terminos_por_comentario %>%
+  summarise(
+    comentarios = n(),
+    media_terminos = mean(n_terminos, na.rm = TRUE),
+    mediana_terminos = median(n_terminos, na.rm = TRUE),
+    desviacion_terminos = sd(n_terminos, na.rm = TRUE),
+    varianza_terminos = var(n_terminos, na.rm = TRUE),
+    minimo_terminos = min(n_terminos, na.rm = TRUE),
+    maximo_terminos = max(n_terminos, na.rm = TRUE),
+    cv_terminos = desviacion_terminos / media_terminos
+  )
+
+resumen_dashboard <- tibble(
+  indicador = c(
+    "Comentarios analizados",
+    "Videos analizados",
+    "Términos válidos",
+    "Términos únicos",
+    "Términos asociados a encuadres",
+    "Encuadres distintos",
+    "Media de términos por comentario",
+    "Desviación estándar",
+    "Varianza",
+    "Coeficiente de variación"
+  ),
+  valor = c(
+    n_distinct(datos$id_comentario_tm),
+    n_distinct(datos$video_id),
+    nrow(terminos_base),
+    n_distinct(terminos_base$lema),
+    nrow(terminos_encuadre),
+    n_distinct(terminos_encuadre$encuadre),
+    round(resumen_extension$media_terminos, 2),
+    round(resumen_extension$desviacion_terminos, 2),
+    round(resumen_extension$varianza_terminos, 2),
+    round(resumen_extension$cv_terminos, 3)
+  )
+)
+```
+
+```{r tablas-base}
+# ============================================================
+# 4. TABLAS ANALÍTICAS BASE
+# ============================================================
+
+top_10_terminos <- terminos_base %>%
+  count(lema, name = "n", sort = TRUE) %>%
+  slice_head(n = 10) %>%
+  rename(termino = lema)
+
+tabla_terminos_frecuentes <- terminos_base %>%
+  count(lema, name = "frecuencia", sort = TRUE) %>%
+  mutate(
+    porcentaje = frecuencia / sum(frecuencia),
+    porcentaje = percent(porcentaje, accuracy = 0.01)
+  ) %>%
+  rename(termino = lema)
+
+frecuencia_encuadres <- terminos_encuadre %>%
+  count(encuadre, name = "n", sort = TRUE)
+
+tabla_encuadres <- terminos_encuadre %>%
+  group_by(encuadre, subencuadre, polaridad_encuadre) %>%
+  summarise(
+    frecuencia = n(),
+    comentarios_distintos = n_distinct(id_comentario_tm),
+    peso_total = sum(peso_encuadre, na.rm = TRUE),
+    peso_promedio = round(mean(peso_encuadre, na.rm = TRUE), 2),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(frecuencia))
+
+polaridad_encuadres <- terminos_encuadre %>%
+  filter(!is.na(polaridad_encuadre), polaridad_encuadre != "") %>%
+  count(polaridad_encuadre, name = "n", sort = TRUE) %>%
+  mutate(
+    porcentaje = n / sum(n),
+    etiqueta = paste0(n, " (", percent(porcentaje, accuracy = 0.1), ")")
+  )
+
+comentarios_por_video <- datos %>%
+  distinct(id_comentario_tm, video_id, titulo_video, titulo_corto, medio) %>%
+  count(video_id, titulo_video, titulo_corto, medio, name = "n_comentarios") %>%
+  arrange(desc(n_comentarios))
+
+estadisticos_video <- terminos_por_comentario %>%
+  group_by(video_id, titulo_video, titulo_corto, medio) %>%
+  summarise(
+    comentarios = n(),
+    media_terminos = mean(n_terminos, na.rm = TRUE),
+    sd_terminos = sd(n_terminos, na.rm = TRUE),
+    var_terminos = var(n_terminos, na.rm = TRUE),
+    cv_terminos = sd_terminos / media_terminos,
+    .groups = "drop"
+  ) %>%
+  arrange(desc(media_terminos))
+
+peso_encuadre_video <- terminos_encuadre %>%
+  group_by(video_id, titulo_video, titulo_corto, medio) %>%
+  summarise(
+    terminos_con_encuadre = n(),
+    peso_total = sum(peso_encuadre, na.rm = TRUE),
+    peso_promedio = mean(peso_encuadre, na.rm = TRUE),
+    sd_peso = sd(peso_encuadre, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(peso_promedio))
+
+top_terminos_encuadrados <- terminos_encuadre %>%
+  count(lema, encuadre, name = "n", sort = TRUE) %>%
+  slice_head(n = 12)
+
+encuadres_por_medio <- terminos_encuadre %>%
+  count(medio, encuadre, name = "n") %>%
+  group_by(medio) %>%
+  mutate(porcentaje = n / sum(n)) %>%
+  ungroup()
+
+top_5_videos_intensidad <- peso_encuadre_video %>%
+  slice_max(order_by = peso_promedio, n = 5, with_ties = FALSE)
+
+ids_top5_intensidad <- top_5_videos_intensidad$video_id
+
+comentarios_por_video_top5 <- comentarios_por_video %>%
+  filter(video_id %in% ids_top5_intensidad)
+
+terminos_por_comentario_top5 <- terminos_por_comentario %>%
+  filter(video_id %in% ids_top5_intensidad)
+
+estadisticos_video_top5 <- estadisticos_video %>%
+  filter(video_id %in% ids_top5_intensidad)
+
+peso_encuadre_video_top5 <- peso_encuadre_video %>%
+  filter(video_id %in% ids_top5_intensidad)
+```
+
+```{r indicadores}
+# ============================================================
+# 5. INDICADORES ANALÍTICOS
+# ============================================================
+
+total_comentarios <- n_distinct(datos$id_comentario_tm)
+total_videos <- n_distinct(datos$video_id)
+total_terminos <- nrow(terminos_base)
+total_terminos_unicos <- n_distinct(terminos_base$lema)
+total_encuadres <- nrow(terminos_encuadre)
+
+riqueza_lexica <- total_terminos_unicos / total_terminos
+tasa_encuadre <- total_encuadres / total_terminos
+
+termino_dominante <- top_10_terminos %>%
+  slice_max(order_by = n, n = 1, with_ties = FALSE)
+
+encuadre_dominante <- frecuencia_encuadres %>%
+  slice_max(order_by = n, n = 1, with_ties = FALSE)
+
+polaridad_dominante <- polaridad_encuadres %>%
+  slice_max(order_by = n, n = 1, with_ties = FALSE)
+
+negatividad_discursiva <- polaridad_encuadres %>%
+  filter(polaridad_encuadre == "negativo") %>%
+  summarise(valor = sum(n) / sum(polaridad_encuadres$n)) %>%
+  pull(valor)
+
+if (length(negatividad_discursiva) == 0 || is.na(negatividad_discursiva)) {
+  negatividad_discursiva <- 0
+}
+
+video_mayor_extension <- estadisticos_video_top5 %>%
+  slice_max(order_by = media_terminos, n = 1, with_ties = FALSE)
+
+video_mayor_peso <- peso_encuadre_video_top5 %>%
+  slice_max(order_by = peso_promedio, n = 1, with_ties = FALSE)
+
+resumen_interpretativo <- tibble(
+  indicador = c(
+    "Riqueza léxica",
+    "Tasa de encuadre discursivo",
+    "Encuadre dominante",
+    "Término dominante",
+    "Polaridad dominante",
+    "Peso de la negatividad"
+  ),
+  valor = c(
+    round(riqueza_lexica, 3),
+    round(tasa_encuadre, 3),
+    encuadre_dominante$encuadre,
+    termino_dominante$termino,
+    polaridad_dominante$polaridad_encuadre,
+    percent(negatividad_discursiva, accuracy = 0.1)
+  ),
+  lectura = c(
+    "Proporción de términos únicos respecto al total de términos analizados.",
+    "Proporción de términos asociados a un encuadre político-discursivo.",
+    "Categoría discursiva con mayor presencia en la conversación.",
+    "Término más repetido dentro de la conversación analizada.",
+    "Orientación predominante de los encuadres detectados.",
+    "Proporción de encuadres con carga negativa."
+  )
+)
+```
+
+```{r funciones}
+# ============================================================
+# 6. FUNCIONES VISUALES
+# ============================================================
+
+limite_superior <- function(x, extra = 0.15, minimo = 5) {
+  max(x, na.rm = TRUE) * (1 + extra) + minimo
+}
+
+tema_resultados <- function() {
+  theme_minimal(base_size = 12) +
+    theme(
+      legend.position = "bottom",
+      plot.title = element_text(size = 14, face = "bold", hjust = 0.5, color = verde_oscuro),
+      plot.subtitle = element_text(size = 10, hjust = 0.5, color = gris_muted),
+      axis.title.x = element_text(size = 10, color = gris_texto),
+      axis.title.y = element_text(size = 10, color = gris_texto),
+      axis.text.x = element_text(color = gris_texto, size = 8),
+      axis.text.y = element_text(color = gris_texto, size = 8, face = "bold"),
+      panel.grid.major.y = element_blank(),
+      panel.grid.minor = element_blank(),
+      plot.background = element_rect(fill = "white", color = NA),
+      panel.background = element_rect(fill = "white", color = NA),
+      plot.margin = margin(10, 25, 10, 10)
+    )
+}
+
+mostrar_grafico <- function(grafico) {
+  plotly::ggplotly(grafico, tooltip = "text") %>%
+    plotly::layout(
+      margin = list(l = 120, r = 28, b = 52, t = 72),
+      legend = list(
+        orientation = "h",
+        x = 0.08,
+        y = -0.16
+      ),
+      paper_bgcolor = "white",
+      plot_bgcolor = "white"
+    )
+}
+
+bloque_interpretacion <- function(titulo, texto) {
+  htmltools::div(
+    class = "interpretacion",
+    htmltools::h4(titulo),
+    htmltools::p(HTML(texto))
+  )
+}
+
+tarjeta <- function(titulo, valor, subtitulo = "") {
+  htmltools::div(
+    class = "card",
+    htmltools::div(class = "label", titulo),
+    htmltools::div(class = "num", valor),
+    htmltools::div(class = "hint", subtitulo)
+  )
+}
+
+obtener_valor <- function(nombre_indicador) {
+  resumen_dashboard %>%
+    filter(indicador == nombre_indicador) %>%
+    pull(valor) %>%
+    as.character()
+}
+
+opciones_dt <- list(
+  pageLength = 7,
+  scrollX = FALSE,
+  autoWidth = TRUE,
+  dom = "tip",
+  columnDefs = list(
+    list(className = "dt-left", targets = "_all")
+  )
+)
+```
+
+<section class="cover">
+
+<h1><b>UNIVERSIDAD NACIONAL AGRARIA LA MOLINA</b></h1>
+
+<h2><b>DEPARTAMENTO ACADÉMICO DE ESTADÍSTICA E INFORMÁTICA</b></h2>
+
+<img src="logo_unalm.png"
+     alt="Logo Universidad Nacional Agraria La Molina"
+     class="cover-logo">
+
+<div class="cover-title">
+Plano de resultados: comentarios políticos de YouTube
+</div>
+
+<div class="cover-subtitle">
+Análisis de encuadres discursivos en noticias políticas y su eco en comentarios de YouTube mediante web scraping y minería de texto.
+</div>
+
+
+</section>
+
+<div class="dashboard-header">
+
+<h1>Resultados del scraper y análisis de comentarios de YouTube</h1>
+
+<p>
+Este plano reúne los principales resultados del procesamiento textual aplicado a comentarios públicos de videos políticos. El diseño visual mantiene el estilo verde usado en el informe y en el dashboard de noticias políticas.
+</p>
+
+<div class="badges">
+  <span class="badge">YouTube Data API</span>
+  <span class="badge">Text mining</span>
+  <span class="badge">Encuadres discursivos</span>
+  <span class="badge">HTML autocontenido</span>
+</div>
+
+</div>
+
+<div class="cards">
+
+```{r tarjetas-resultados, results='asis'}
+htmltools::tagList(
+  tarjeta("Comentarios", obtener_valor("Comentarios analizados"), "Registros analizados"),
+  tarjeta("Videos", obtener_valor("Videos analizados"), "Videos políticos"),
+  tarjeta("Términos válidos", obtener_valor("Términos válidos"), "Luego de depuración"),
+  tarjeta("Término dominante", termino_dominante$termino, "Mayor frecuencia"),
+  tarjeta("Encuadres", obtener_valor("Encuadres distintos"), "Categorías detectadas"),
+  tarjeta("Con encuadre", obtener_valor("Términos asociados a encuadres"), "Términos clasificados"),
+  tarjeta("Media", obtener_valor("Media de términos por comentario"), "Términos por comentario"),
+  tarjeta("CV", obtener_valor("Coeficiente de variación"), "Dispersión textual")
+)
+```
+
+</div>
+
+<div class="section-box">
+
+## Lectura general de indicadores
+
+<div class="grid-equal">
+
+<div class="subcard">
+
+### Indicadores interpretativos
+
+```{r tabla-indicadores}
+DT::datatable(
+  resumen_interpretativo,
+  rownames = FALSE,
+  options = list(
+    pageLength = 6,
+    scrollX = FALSE,
+    dom = "tip"
+  )
+)
+```
+
+</div>
+
+<div class="subcard">
+
+### Resumen del corpus
+
+```{r tabla-resumen}
+DT::datatable(
+  resumen_dashboard,
+  rownames = FALSE,
+  options = list(
+    pageLength = 10,
+    scrollX = FALSE,
+    dom = "tip"
+  )
+)
+```
+
+</div>
+
+</div>
+
+```{r lectura-indicadores}
+bloque_interpretacion(
+  "Interpretación de los indicadores generales",
+  paste0(
+    "El estudio analiza <b>", total_comentarios,
+    "</b> comentarios distribuidos en <b>", total_videos,
+    "</b> videos políticos de YouTube. Se identificaron <b>", total_terminos,
+    "</b> términos válidos y <b>", total_terminos_unicos,
+    "</b> términos únicos. La riqueza léxica aproximada es de <b>", round(riqueza_lexica, 3),
+    "</b>, lo que sugiere una conversación variada aunque concentrada en términos recurrentes como <b>", termino_dominante$termino,
+    "</b>."
+  )
+)
+```
+
+</div>
+
+<div class="section-box">
+
+## Frecuencia discursiva
+
+<p class="desc">
+Se identifican los términos más repetidos dentro de los comentarios depurados. Esta lectura permite reconocer los temas y palabras que estructuran la conversación política.
+</p>
+
+<div class="grid-stack">
+
+<div class="subcard">
+
+### Top 10 términos centrales
+
+```{r top-10-terminos}
+grafico_top10 <- ggplot(
+  top_10_terminos,
+  aes(
+    x = reorder(termino, n),
+    y = n,
+    fill = termino,
+    text = paste0("Término: ", termino, "<br>Frecuencia: ", n)
+  )
+) +
+  geom_col(width = 0.75) +
+  coord_flip(clip = "off") +
+  geom_text(aes(label = n), hjust = -0.18, colour = "black", size = 3.4) +
+  scale_fill_manual(values = paleta_discreta(top_10_terminos$termino)) +
+  scale_y_continuous(
+    limits = c(0, limite_superior(top_10_terminos$n, extra = 0.12, minimo = 4)),
+    expand = c(0, 0)
+  ) +
+  labs(
+    title = "Términos centrales en la conversación política",
+    subtitle = "Palabras con mayor presencia en los comentarios analizados",
+    x = "Término",
+    y = "Frecuencia"
+  ) +
+  tema_resultados() +
+  theme(legend.position = "none")
+
+mostrar_grafico(grafico_top10)
+```
+
+</div>
+
+<div class="subcard table-card">
+
+### Top 50 términos
+
+```{r tabla-top-terminos}
+DT::datatable(
+  tabla_terminos_frecuentes,
+  rownames = FALSE,
+  filter = "top",
+  class = "stripe hover compact cell-border tabla-nowrap",
+  options = opciones_dt
+)
+```
+
+</div>
+
+</div>
+
+```{r interpretacion-terminos}
+bloque_interpretacion(
+  "Lectura de la frecuencia discursiva",
+  paste0(
+    "El término con mayor frecuencia es <b>", termino_dominante$termino,
+    "</b>, con <b>", termino_dominante$n,
+    "</b> apariciones. Su predominio sugiere que la conversación se articula alrededor de temas de legitimidad, disputa política o cuestionamiento público."
+  )
+)
+```
+
+</div>
+
+<div class="section-box">
+
+## Encuadres discursivos
+
+<p class="desc">
+Los encuadres permiten observar cómo los usuarios interpretan los hechos políticos: desde legitimidad electoral, corrupción, institucionalidad, judicialización o polarización.
+</p>
+
+<div class="grid-stack">
+
+<div class="subcard">
+
+### Marcos políticos predominantes
+
+```{r grafico-encuadres}
+grafico_encuadres <- ggplot(
+  frecuencia_encuadres,
+  aes(
+    x = reorder(encuadre, n),
+    y = n,
+    fill = encuadre,
+    text = paste0("Encuadre: ", encuadre, "<br>Frecuencia: ", n)
+  )
+) +
+  geom_col(width = 0.75) +
+  coord_flip(clip = "off") +
+  geom_text(aes(label = n), hjust = -0.15, colour = "black", size = 3.4) +
+  scale_fill_manual(values = paleta_discreta(frecuencia_encuadres$encuadre)) +
+  scale_y_continuous(
+    limits = c(0, limite_superior(frecuencia_encuadres$n, extra = 0.12, minimo = 8)),
+    expand = c(0, 0)
+  ) +
+  labs(
+    title = "Marcos políticos predominantes",
+    subtitle = "Categorías discursivas usadas para interpretar las noticias políticas",
+    x = "Encuadre discursivo",
+    y = "Frecuencia"
+  ) +
+  tema_resultados() +
+  theme(legend.position = "none")
+
+mostrar_grafico(grafico_encuadres)
+```
+
+</div>
+
+<div class="subcard table-card">
+
+### Tabla de encuadres
+
+```{r tabla-encuadres}
+DT::datatable(
+  tabla_encuadres,
+  rownames = FALSE,
+  filter = "top",
+  class = "stripe hover compact cell-border tabla-nowrap",
+  options = opciones_dt
+)
+```
+
+</div>
+
+</div>
+
+```{r interpretacion-encuadres}
+bloque_interpretacion(
+  "Lectura de los encuadres discursivos",
+  paste0(
+    "El encuadre predominante es <b>", encuadre_dominante$encuadre,
+    "</b>, con <b>", encuadre_dominante$n,
+    "</b> apariciones. Esto indica que una parte importante del debate se organiza alrededor de una forma específica de interpretar la política."
+  )
+)
+```
+
+</div>
+
+<div class="section-box">
+
+## Comparación por medio
+
+<p class="desc">
+Esta sección permite comparar si los comentarios asociados a cada medio activan encuadres similares o si presentan énfasis distintos.
+</p>
+
+<div class="grid-stack">
+
+<div class="subcard">
+
+### Encuadres por medio
+
+```{r encuadres-medio}
+grafico_encuadres_medio <- ggplot(
+  encuadres_por_medio,
+  aes(
+    x = reorder(encuadre, n),
+    y = n,
+    fill = medio,
+    text = paste0(
+      "Medio: ", medio,
+      "<br>Encuadre: ", encuadre,
+      "<br>Frecuencia: ", n,
+      "<br>Porcentaje dentro del medio: ", percent(porcentaje, accuracy = 0.1)
+    )
+  )
+) +
+  geom_col(position = "dodge", width = 0.75) +
+  coord_flip(clip = "off") +
+  scale_fill_manual(values = paleta_discreta(encuadres_por_medio$medio)) +
+  labs(
+    title = "Encuadres discursivos según medio",
+    subtitle = "Comparación del eco discursivo generado alrededor de cada medio",
+    x = "Encuadre discursivo",
+    y = "Frecuencia"
+  ) +
+  tema_resultados()
+
+mostrar_grafico(grafico_encuadres_medio)
+```
+
+</div>
+
+<div class="subcard table-card">
+
+### Tabla comparativa
+
+```{r tabla-encuadres-medio}
+tabla_encuadres_medio <- encuadres_por_medio %>%
+  mutate(porcentaje = percent(porcentaje, accuracy = 0.1)) %>%
+  arrange(medio, desc(n))
+
+DT::datatable(
+  tabla_encuadres_medio,
+  rownames = FALSE,
+  filter = "top",
+  class = "stripe hover compact cell-border tabla-nowrap",
+  options = opciones_dt
+)
+```
+
+</div>
+
+</div>
+
+```{r interpretacion-medio}
+bloque_interpretacion(
+  "Comparación del eco discursivo por medio",
+  "La comparación por medio permite observar si los comentarios asociados a cada fuente periodística reproducen encuadres similares o si activan énfasis distintos. Una mayor presencia de encuadres como legitimidad electoral, corrupción o judicialización sugiere que los usuarios reconstruyen la noticia desde preocupaciones políticas específicas."
+)
+```
+
+</div>
+
+<div class="section-box">
+
+## Términos clave y polaridad
+
+<p class="desc">
+Los términos encuadrados muestran qué palabras activan lecturas políticas dentro de la conversación. La polaridad permite observar la orientación aproximada de dichos encuadres.
+</p>
+
+<div class="grid-equal">
+
+<div class="subcard">
+
+### Términos que activan encuadres
+
+```{r top-terminos-encuadrados}
+grafico_top_encuadrados <- ggplot(
+  top_terminos_encuadrados,
+  aes(
+    x = reorder(lema, n),
+    y = n,
+    fill = encuadre,
+    text = paste0("Término: ", lema, "<br>Encuadre: ", encuadre, "<br>Frecuencia: ", n)
+  )
+) +
+  geom_col(width = 0.75) +
+  coord_flip(clip = "off") +
+  geom_text(aes(label = n), hjust = -0.15, colour = "black", size = 3.3) +
+  scale_fill_manual(values = paleta_discreta(top_terminos_encuadrados$encuadre)) +
+  scale_y_continuous(
+    limits = c(0, limite_superior(top_terminos_encuadrados$n, extra = 0.15, minimo = 4)),
+    expand = c(0, 0)
+  ) +
+  labs(
+    title = "Términos que activan encuadres políticos",
+    subtitle = "Palabras con función interpretativa dentro del análisis",
+    x = "Término",
+    y = "Frecuencia"
+  ) +
+  tema_resultados()
+
+mostrar_grafico(grafico_top_encuadrados)
+```
+
+</div>
+
+<div class="subcard">
+
+### Orientación discursiva
+
+```{r grafico-polaridad}
+grafico_polaridad <- ggplot(
+  polaridad_encuadres,
+  aes(
+    x = reorder(polaridad_encuadre, n),
+    y = n,
+    fill = polaridad_encuadre,
+    text = paste0(
+      "Polaridad: ", polaridad_encuadre,
+      "<br>Frecuencia: ", n,
+      "<br>Porcentaje: ", percent(porcentaje, accuracy = 0.1)
+    )
+  )
+) +
+  geom_col(width = 0.75) +
+  coord_flip(clip = "off") +
+  geom_text(aes(label = etiqueta), hjust = -0.08, colour = "black", size = 3.4) +
+  scale_fill_manual(values = colores_polaridad, na.value = verde_suave) +
+  scale_y_continuous(
+    limits = c(0, limite_superior(polaridad_encuadres$n, extra = 0.20, minimo = 15)),
+    expand = c(0, 0)
+  ) +
+  labs(
+    title = "Orientación discursiva de los encuadres",
+    subtitle = "Distribución aproximada de la carga positiva, negativa o neutra",
+    x = "Polaridad",
+    y = "Frecuencia"
+  ) +
+  tema_resultados() +
+  theme(legend.position = "none")
+
+mostrar_grafico(grafico_polaridad)
+```
+
+</div>
+
+</div>
+
+```{r interpretacion-polaridad}
+bloque_interpretacion(
+  "Lectura de la polaridad discursiva",
+  paste0(
+    "La polaridad predominante es <b>", polaridad_dominante$polaridad_encuadre,
+    "</b>, mientras que la carga negativa alcanza aproximadamente <b>", percent(negatividad_discursiva, accuracy = 0.1),
+    "</b>. Esto evidencia una conversación con presencia de crítica, acusación o desconfianza política."
+  )
+)
+```
+
+</div>
+
+<div class="section-box">
+
+## Extensión textual y videos destacados
+
+<p class="desc">
+Estas visualizaciones resumen la extensión de los comentarios y comparan los videos con mayor intensidad discursiva.
+</p>
+
+<div class="grid-equal">
+
+<div class="subcard">
+
+### Extensión de comentarios
+
+```{r histograma-extension}
+media_terminos <- resumen_extension$media_terminos
+
+grafico_hist_extension <- ggplot(
+  terminos_por_comentario,
+  aes(x = n_terminos, text = paste0("Términos por comentario: ", n_terminos))
+) +
+  geom_histogram(bins = 25, fill = verde_suave, color = "white") +
+  geom_vline(xintercept = media_terminos, linetype = "dashed", linewidth = 1, color = verde_oscuro) +
+  annotate(
+    "text",
+    x = media_terminos,
+    y = Inf,
+    label = paste0("Media = ", round(media_terminos, 2)),
+    vjust = 1.5,
+    hjust = -0.1,
+    color = verde_oscuro,
+    size = 3.5
+  ) +
+  labs(
+    title = "Extensión de la participación escrita",
+    subtitle = "Distribución del número de términos usados por comentario",
+    x = "Número de términos por comentario",
+    y = "Frecuencia"
+  ) +
+  tema_resultados()
+
+mostrar_grafico(grafico_hist_extension)
+```
+
+</div>
+
+<div class="subcard">
+
+### Variabilidad por video
+
+```{r boxplot-video}
+grafico_boxplot_video <- ggplot(
+  terminos_por_comentario_top5,
+  aes(
+    x = reorder(titulo_corto, n_terminos, FUN = median),
+    y = n_terminos,
+    fill = medio,
+    text = paste0("Video: ", titulo_corto, "<br>Términos: ", n_terminos, "<br>Medio: ", medio)
+  )
+) +
+  geom_boxplot(alpha = 0.85, outlier.alpha = 0.45) +
+  coord_flip() +
+  scale_fill_manual(values = paleta_discreta(terminos_por_comentario_top5$medio)) +
+  labs(
+    title = "Variabilidad de extensión textual por video",
+    subtitle = "Comparación en los 5 videos con mayor intensidad discursiva",
+    x = "Video",
+    y = "Términos por comentario"
+  ) +
+  tema_resultados()
+
+mostrar_grafico(grafico_boxplot_video)
+```
+
+</div>
+
+</div>
+
+<div class="grid-equal">
+
+<div class="subcard">
+
+### Comentarios por video
+
+```{r comentarios-video}
+grafico_comentarios_video <- ggplot(
+  comentarios_por_video_top5,
+  aes(
+    x = reorder(titulo_corto, n_comentarios),
+    y = n_comentarios,
+    fill = medio,
+    text = paste0("Video: ", titulo_corto, "<br>Comentarios: ", n_comentarios, "<br>Medio: ", medio)
+  )
+) +
+  geom_col(width = 0.75) +
+  coord_flip(clip = "off") +
+  geom_text(aes(label = n_comentarios), hjust = -0.18, colour = "black", size = 3.4) +
+  scale_fill_manual(values = paleta_discreta(comentarios_por_video_top5$medio)) +
+  scale_y_continuous(
+    limits = c(0, limite_superior(comentarios_por_video_top5$n_comentarios, extra = 0.08, minimo = 2)),
+    expand = c(0, 0)
+  ) +
+  labs(
+    title = "Comentarios analizados en videos destacados",
+    subtitle = "Se muestran los videos con mayor intensidad discursiva promedio",
+    x = "Video",
+    y = "Número de comentarios"
+  ) +
+  tema_resultados()
+
+mostrar_grafico(grafico_comentarios_video)
+```
+
+</div>
+
+<div class="subcard">
+
+### Intensidad de encuadres
+
+```{r peso-video}
+grafico_peso_video <- ggplot(
+  peso_encuadre_video_top5,
+  aes(
+    x = reorder(titulo_corto, peso_promedio),
+    y = peso_promedio,
+    fill = medio,
+    text = paste0(
+      "Video: ", titulo_corto,
+      "<br>Peso promedio: ", round(peso_promedio, 2),
+      "<br>Términos con encuadre: ", terminos_con_encuadre,
+      "<br>Peso total: ", peso_total
+    )
+  )
+) +
+  geom_col(width = 0.75) +
+  coord_flip(clip = "off") +
+  geom_text(aes(label = round(peso_promedio, 2)), hjust = -0.16, colour = "black", size = 3.3) +
+  scale_fill_manual(values = paleta_discreta(peso_encuadre_video_top5$medio)) +
+  scale_y_continuous(
+    limits = c(0, limite_superior(peso_encuadre_video_top5$peso_promedio, extra = 0.08, minimo = 0.3)),
+    expand = c(0, 0)
+  ) +
+  labs(
+    title = "Intensidad de encuadres políticos por video",
+    subtitle = "Comparación de los videos con mayor intensidad discursiva",
+    x = "Video",
+    y = "Peso promedio del encuadre"
+  ) +
+  tema_resultados()
+
+mostrar_grafico(grafico_peso_video)
+```
+
+</div>
+
+</div>
+
+```{r interpretacion-video}
+bloque_interpretacion(
+  "Lectura comparativa por video",
+  paste0(
+    "El video con mayor extensión promedio entre los casos destacados es <b>", video_mayor_extension$titulo_corto,
+    "</b>, con una media de <b>", round(video_mayor_extension$media_terminos, 2),
+    "</b> términos por comentario. Por su parte, el video con mayor peso promedio de encuadres es <b>", video_mayor_peso$titulo_corto,
+    "</b>, con un valor de <b>", round(video_mayor_peso$peso_promedio, 2),
+    "</b>. Esto sugiere que algunos videos no necesariamente generan más comentarios, pero sí comentarios más cargados de sentido político."
+  )
+)
+```
+
+</div>
+
+<div class="section-box">
+
+## Observaciones analíticas y exploración
+
+<div class="grid-equal">
+
+<div class="subcard">
+
+### Observaciones principales
+
+```{r tabla-observaciones}
+observaciones_analiticas <- tibble(
+  eje = c(
+    "Frecuencia discursiva",
+    "Encuadre dominante",
+    "Polaridad",
+    "Extensión de comentarios",
+    "Comparación por video",
+    "Lectura política general"
+  ),
+  observacion = c(
+    paste0(
+      "El término más frecuente es '", termino_dominante$termino,
+      "', con ", termino_dominante$n,
+      " apariciones. Esto revela una concentración temática en torno a conceptos clave del debate político."
+    ),
+    paste0(
+      "El encuadre dominante es '", encuadre_dominante$encuadre,
+      "', lo que indica que los usuarios interpretan las noticias desde preocupaciones asociadas a legitimidad, instituciones o conflicto político."
+    ),
+    paste0(
+      "La polaridad predominante es '", polaridad_dominante$polaridad_encuadre,
+      "', aunque la negatividad alcanza ", percent(negatividad_discursiva, accuracy = 0.1),
+      ". Esto evidencia una conversación con presencia de crítica o desconfianza."
+    ),
+    paste0(
+      "La media de términos por comentario es ", round(resumen_extension$media_terminos, 2),
+      ", pero el coeficiente de variación es ", round(resumen_extension$cv_terminos, 3),
+      ", lo que indica alta heterogeneidad textual."
+    ),
+    paste0(
+      "El video con mayor intensidad promedio de encuadres es '", video_mayor_peso$titulo_corto,
+      "', lo que sugiere una conversación más cargada de sentido político."
+    ),
+    "El conjunto de resultados permite observar cómo los comentarios reorganizan la noticia desde marcos de disputa política, instituciones, legitimidad y polarización."
+  )
+)
+
+DT::datatable(
+  observaciones_analiticas,
+  rownames = FALSE,
+  options = list(
+    pageLength = 6,
+    scrollX = FALSE,
+    dom = "tip"
+  )
+)
+```
+
+</div>
+
+<div class="subcard">
+
+### Tabla de extensión por comentario
+
+```{r tabla-extension-comentarios}
+tabla_extension_comentarios <- terminos_por_comentario %>%
+  arrange(desc(n_terminos)) %>%
+  transmute(
+    ID = id_comentario_tm,
+    Medio = medio,
+    Video = str_trunc(str_squish(titulo_video), width = 58),
+    `N.º términos` = n_terminos
+  )
+
+DT::datatable(
+  tabla_extension_comentarios,
+  rownames = FALSE,
+  filter = "top",
+  class = "stripe hover compact cell-border",
+  options = opciones_dt
+)
+```
+
+</div>
+
+</div>
+
+### Detalle tokenizado
+
+```{r tabla-exploracion}
+tabla_exploracion <- datos %>%
+  transmute(
+    ID = id_comentario_tm,
+    Medio = medio,
+    Video = str_trunc(str_squish(titulo_video), width = 48),
+    Token = token,
+    Lema = lema,
+    Encuadre = encuadre,
+    Polaridad = polaridad_encuadre,
+    Peso = round(peso_encuadre, 2)
+  )
+
+DT::datatable(
+  tabla_exploracion,
+  rownames = FALSE,
+  filter = "top",
+  class = "stripe hover compact cell-border",
+  options = list(
+    pageLength = 8,
+    scrollX = FALSE,
+    autoWidth = FALSE,
+    dom = "tip",
+    columnDefs = list(
+      list(width = "1%", targets = 0),
+      list(className = "dt-left", targets = "_all")
+    )
+  )
+)
+```
+
+</div>
+
+<div class="section-box">
+
+## Síntesis general del análisis
+
+```{r cierre}
+bloque_interpretacion(
+  "Síntesis general",
+  "Los resultados muestran que la conversación política analizada se organiza principalmente alrededor de la legitimidad electoral, los actores políticos y las instituciones. El predominio de expresiones neutras indica una fuerte presencia de menciones descriptivas a procesos y actores; sin embargo, la carga negativa también es relevante, especialmente en términos asociados a fraude, corrupción, desconfianza mediática y cuestionamiento institucional. Asimismo, la alta variabilidad en la extensión de los comentarios evidencia que el debate combina respuestas breves, reacciones directas y comentarios más desarrollados. En consecuencia, el análisis permite observar no solo qué palabras se repiten, sino cómo se estructuran los principales encuadres discursivos en torno a la política peruana en YouTube."
+)
+```
+
+</div>
+
+<div class="footer">
+Generado con Quarto | Proyecto LP2 | Plano de resultados de comentarios políticos de YouTube
+</div>
