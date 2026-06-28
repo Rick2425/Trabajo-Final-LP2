@@ -1,0 +1,839 @@
+---
+lang: es
+format:
+  html:
+    theme: flatly
+    toc: true
+    toc-title: "Contenido"
+    toc-depth: 3
+    number-sections: false
+    smooth-scroll: true
+    code-fold: true
+    code-summary: "Mostrar código"
+    code-copy: true
+    embed-resources: true
+    page-layout: full
+    fig-align: center
+    df-print: paged
+    link-external-newwindow: true
+
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+# ============================================================
+# 1. DEPENDENCIAS
+# ============================================================
+
+if (!require("pacman")) {
+  install.packages("pacman")
+}
+
+pacman::p_load(
+  tidyverse,
+  readr,
+  stringr,
+  scales,
+  plotly,
+  DT,
+  htmltools,
+  tidytext,
+  lubridate,
+  stopwords
+)
+```
+
+```{css}
+:root {
+  --verde: #004d2e;
+  --verde-2: #006b3f;
+  --verde-3: #178f5d;
+  --fondo: #f4f8f6;
+  --tarjeta: #ffffff;
+  --borde: #d7e8df;
+  --texto: #1f2933;
+  --gris: #5b6770;
+}
+
+body {
+  background: var(--fondo);
+  color: var(--texto);
+  line-height: 1.6;
+}
+
+h1, h2, h3 {
+  color: var(--verde);
+  font-weight: 800;
+}
+
+.quarto-title-block {
+  display: none;
+}
+
+.cover {
+  max-width: 1180px;
+  margin: 0 auto 1.5rem auto;
+  padding: 2rem;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #ffffff 0%, #f2faf5 100%);
+  border: 1px solid var(--borde);
+  box-shadow: 0 8px 24px rgba(0, 77, 46, 0.08);
+  text-align: center;
+}
+
+.cover h1 {
+  font-size: 1.7rem;
+  letter-spacing: 1px;
+  margin-bottom: 0.3rem;
+}
+
+.cover h2 {
+  font-size: 1.05rem;
+  color: #335346;
+  margin-top: 0;
+}
+
+.cover-logo {
+  width: 145px;
+  height: 145px;
+  object-fit: contain;
+  margin: 1rem auto;
+  display: block;
+}
+
+.cover-title {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: var(--verde);
+  text-transform: uppercase;
+  line-height: 1.35;
+  margin-top: 1rem;
+}
+
+.cover-subtitle {
+  color: var(--gris);
+  font-size: 0.95rem;
+  margin-top: 0.6rem;
+}
+
+.dashboard-header {
+  background: linear-gradient(135deg, var(--verde), var(--verde-2));
+  color: white;
+  padding: 1.7rem 2rem;
+  border-radius: 20px;
+  box-shadow: 0 10px 28px rgba(0, 77, 46, 0.22);
+  margin-bottom: 1.2rem;
+}
+
+.dashboard-header h1 {
+  color: white;
+  margin: 0;
+  font-size: 1.85rem;
+}
+
+.dashboard-header p {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.95rem;
+  opacity: 0.94;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.42rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.17);
+  border: 1px solid rgba(255,255,255,0.28);
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.9rem;
+  margin-bottom: 1.2rem;
+}
+
+.card {
+  background: var(--tarjeta);
+  border-radius: 16px;
+  padding: 1rem;
+  border: 1px solid var(--borde);
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.045);
+  min-height: 96px;
+}
+
+.card .label {
+  font-size: 0.75rem;
+  color: var(--gris);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 0.45rem;
+}
+
+.card .num {
+  font-size: 1.7rem;
+  line-height: 1.1;
+  color: var(--verde);
+  font-weight: 900;
+}
+
+.card .hint {
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--gris);
+}
+
+.section-box {
+  background: var(--tarjeta);
+  border: 1px solid var(--borde);
+  border-radius: 18px;
+  padding: 1.2rem;
+  margin-bottom: 1.2rem;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.04);
+}
+
+.section-box h2 {
+  margin-top: 0;
+  margin-bottom: 0.3rem;
+  font-size: 1.35rem;
+}
+
+.section-box .desc {
+  margin-top: 0;
+  color: var(--gris);
+  font-size: 0.9rem;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.grid-equal {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.subcard {
+  border: 1px solid #e1eee7;
+  border-radius: 14px;
+  padding: 0.8rem;
+  background: #fbfdfc;
+}
+
+.subcard h3 {
+  margin-top: 0;
+  margin-bottom: 0.55rem;
+  color: var(--verde);
+  font-size: 1rem;
+}
+
+.note {
+  background: #eef8f2;
+  border-left: 5px solid var(--verde-2);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  color: #284238;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin-top: 1rem;
+}
+
+.footer {
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.8rem;
+  margin-top: 1rem;
+  padding: 1rem 0 0.5rem 0;
+}
+
+@media (max-width: 1100px) {
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid-2,
+  .grid-equal {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .cover {
+    padding: 1.4rem;
+  }
+
+  .dashboard-header {
+    padding: 1.3rem;
+  }
+}
+```
+
+```{r}
+# ============================================================
+# 2. CARGA Y PREPARACIÓN DE DATOS
+# ============================================================
+
+archivo_entrada <- "base_noticias_politicas.csv"
+
+if (!file.exists(archivo_entrada)) {
+  stop("No se encontró el archivo base_noticias_politicas.csv. Colócalo en la misma carpeta del QMD.")
+}
+
+if (!file.exists("logo_unalm.png")) {
+  stop("No se encontró logo_unalm.png. Colócalo en la misma carpeta del QMD.")
+}
+
+datos_raw <- read_csv(archivo_entrada, show_col_types = FALSE)
+
+columnas_minimas <- c("fuente", "titulo", "cuerpo_texto")
+faltantes <- setdiff(columnas_minimas, names(datos_raw))
+
+if (length(faltantes) > 0) {
+  stop("Faltan columnas necesarias: ", paste(faltantes, collapse = ", "))
+}
+
+parsear_fecha <- function(x) {
+  fecha_parseada <- suppressWarnings(
+    lubridate::parse_date_time(
+      as.character(x),
+      orders = c(
+        "ymd HMS z",
+        "ymd HMS",
+        "ymd",
+        "dmy HMS",
+        "dmy",
+        "mdy HMS",
+        "mdy"
+      ),
+      tz = "UTC"
+    )
+  )
+  as.Date(fecha_parseada)
+}
+
+datos <- datos_raw %>%
+  mutate(
+    id_noticia = if ("id_noticia" %in% names(.)) id_noticia else row_number(),
+    medio = as.character(fuente),
+    titulo = as.character(titulo),
+    resumen = if ("resumen" %in% names(.)) as.character(resumen) else "",
+    cuerpo_texto = as.character(cuerpo_texto),
+    url = if ("url" %in% names(.)) as.character(url) else "",
+    fecha = if ("fecha_publicacion" %in% names(.)) {
+      parsear_fecha(fecha_publicacion)
+    } else {
+      as.Date(NA)
+    },
+    texto_analisis = str_squish(
+      paste(titulo, resumen, cuerpo_texto, sep = " ")
+    ),
+    texto_analisis = na_if(texto_analisis, ""),
+    titulo_corto = str_trunc(titulo, width = 95),
+    resumen_corto = str_trunc(resumen, width = 120)
+  ) %>%
+  filter(!is.na(texto_analisis))
+```
+
+```{r}
+# ============================================================
+# 3. TOKENIZACIÓN Y LIMPIEZA TEXTUAL
+# ============================================================
+
+stopwords_es <- stopwords::stopwords("es")
+stopwords_en <- stopwords::stopwords("en")
+
+stopwords_extra <- c(
+  "sin", "texto", "disponible", "resumen", "titulo", "título",
+  "republica", "república", "new", "york", "times",
+  "the", "nyt", "larepublica", "redaccion", "redacción",
+  "peru", "perú", "politica", "política", "politico", "político",
+  "politicos", "políticos", "noticia", "noticias", "dijo", "tras",
+  "segun", "según", "sera", "será", "años", "año",
+  "html", "https", "http", "www", "com"
+)
+
+stopwords_total <- unique(c(stopwords_es, stopwords_en, stopwords_extra))
+
+tokens_noticias <- datos %>%
+  select(id_noticia, medio, titulo, fecha, texto_analisis) %>%
+  unnest_tokens(palabra, texto_analisis) %>%
+  mutate(
+    palabra = str_to_lower(palabra),
+    palabra = str_replace_all(palabra, "[0-9]+", "")
+  ) %>%
+  filter(
+    !palabra %in% stopwords_total,
+    str_detect(palabra, "^[a-záéíóúñ]+$"),
+    str_length(palabra) >= 3
+  )
+
+palabras_frecuentes <- tokens_noticias %>%
+  count(palabra, sort = TRUE)
+
+top_10_palabras <- palabras_frecuentes %>%
+  slice_head(n = 10) %>%
+  mutate(termino = fct_reorder(palabra, n))
+
+top_terminos_medio <- tokens_noticias %>%
+  group_by(medio) %>%
+  count(palabra, sort = TRUE) %>%
+  slice_max(order_by = n, n = 10, with_ties = FALSE) %>%
+  ungroup() %>%
+  mutate(
+    etiqueta = paste0(palabra, " — ", medio),
+    etiqueta = fct_reorder(etiqueta, n)
+  )
+
+resumen_medios <- datos %>%
+  group_by(medio) %>%
+  summarise(
+    noticias = n(),
+    fecha_min = suppressWarnings(min(fecha, na.rm = TRUE)),
+    fecha_max = suppressWarnings(max(fecha, na.rm = TRUE)),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    fecha_min = if_else(is.infinite(fecha_min), as.Date(NA), fecha_min),
+    fecha_max = if_else(is.infinite(fecha_max), as.Date(NA), fecha_max)
+  )
+
+datos_tiempo <- datos %>%
+  filter(!is.na(fecha)) %>%
+  mutate(mes = floor_date(fecha, unit = "month")) %>%
+  count(mes, medio, name = "noticias")
+```
+
+```{r}
+# ============================================================
+# 4. MÉTRICAS
+# ============================================================
+
+total_noticias <- nrow(datos)
+total_medios <- n_distinct(datos$medio)
+total_terminos_unicos <- n_distinct(tokens_noticias$palabra)
+total_tokens <- nrow(tokens_noticias)
+
+periodo_texto <- if (all(is.na(datos$fecha))) {
+  "Sin fecha disponible"
+} else {
+  paste0(
+    format(min(datos$fecha, na.rm = TRUE), "%d/%m/%Y"),
+    " - ",
+    format(max(datos$fecha, na.rm = TRUE), "%d/%m/%Y")
+  )
+}
+
+medio_principal <- resumen_medios %>%
+  arrange(desc(noticias)) %>%
+  slice_head(n = 1) %>%
+  pull(medio)
+
+termino_principal <- palabras_frecuentes %>%
+  slice_head(n = 1) %>%
+  pull(palabra)
+```
+
+<section class="cover">
+
+<h1><b>UNIVERSIDAD NACIONAL AGRARIA LA MOLINA</b></h1>
+
+<h2><b>DEPARTAMENTO ACADÉMICO DE ESTADÍSTICA E INFORMÁTICA</b></h2>
+
+<img src="logo_unalm.png"
+     alt="Logo Universidad Nacional Agraria La Molina"
+     class="cover-logo">
+
+<div class="cover-title">
+Dashboard de noticias políticas
+</div>
+
+<div class="cover-subtitle">
+Análisis de encuadres discursivos en noticias políticas mediante minería de texto
+</div>
+
+</section>
+
+<div class="dashboard-header">
+
+<h1>Dashboard de Noticias Políticas</h1>
+
+<p>
+Análisis exploratorio de encuadres discursivos en noticias políticas recolectadas desde La República y The New York Times.
+</p>
+
+<div class="badges">
+  <span class="badge">Web scraping</span>
+  <span class="badge">API oficial</span>
+  <span class="badge">Minería de texto</span>
+  <span class="badge">CSV integrado</span>
+  <span class="badge">HTML autocontenido</span>
+</div>
+
+</div>
+
+<div class="cards">
+
+<div class="card">
+<div class="label">Noticias</div>
+<div class="num">`r comma(total_noticias)`</div>
+<div class="hint">Registros analizados</div>
+</div>
+
+<div class="card">
+<div class="label">Medios</div>
+<div class="num">`r comma(total_medios)`</div>
+<div class="hint">Fuentes integradas</div>
+</div>
+
+<div class="card">
+<div class="label">Términos únicos</div>
+<div class="num">`r comma(total_terminos_unicos)`</div>
+<div class="hint">Luego de limpieza</div>
+</div>
+
+<div class="card">
+<div class="label">Total términos</div>
+<div class="num">`r comma(total_tokens)`</div>
+<div class="hint">Tokens válidos</div>
+</div>
+
+<div class="card">
+<div class="label">Término principal</div>
+<div class="num" style="font-size:1.25rem;">`r termino_principal`</div>
+<div class="hint">Mayor frecuencia</div>
+</div>
+
+</div>
+
+<div class="section-box">
+
+## Resumen general
+
+<p class="desc">
+Esta sección resume la distribución de noticias por medio y el periodo temporal detectado en la base.
+</p>
+
+<div class="grid-equal">
+
+<div class="subcard">
+
+### Noticias por medio
+
+```{r}
+plot_ly(
+  data = resumen_medios,
+  x = ~medio,
+  y = ~noticias,
+  type = "bar",
+  text = ~noticias,
+  textposition = "outside",
+  hovertemplate = paste(
+    "<b>Medio:</b> %{x}<br>",
+    "<b>Noticias:</b> %{y}<extra></extra>"
+  ),
+  marker = list(
+    color = c("#004d2e", "#0f7a4a", "#35a873", "#82d3a5"),
+    line = list(color = "#ffffff", width = 1)
+  )
+) %>%
+  layout(
+    xaxis = list(title = ""),
+    yaxis = list(title = "Cantidad de noticias", rangemode = "tozero"),
+    margin = list(l = 55, r = 35, t = 20, b = 65),
+    height = 320,
+    paper_bgcolor = "white",
+    plot_bgcolor = "white"
+  )
+```
+
+</div>
+
+<div class="subcard">
+
+### Resumen tabular
+
+```{r}
+datatable(
+  resumen_medios %>%
+    mutate(
+      fecha_min = as.character(fecha_min),
+      fecha_max = as.character(fecha_max)
+    ) %>%
+    rename(
+      Medio = medio,
+      Noticias = noticias,
+      `Primera fecha` = fecha_min,
+      `Última fecha` = fecha_max
+    ),
+  rownames = FALSE,
+  class = "stripe hover compact",
+  options = list(
+    pageLength = 8,
+    scrollX = TRUE,
+    autoWidth = TRUE,
+    dom = "tip"
+  )
+)
+```
+
+</div>
+
+</div>
+
+<div class="note">
+<b>Periodo detectado:</b> `r periodo_texto`. 
+<b>Medio con mayor presencia:</b> `r medio_principal`.
+</div>
+
+</div>
+
+<div class="section-box">
+
+## Frecuencia de términos
+
+<p class="desc">
+Se tokenizó el contenido textual de las noticias y se eliminaron palabras vacías en español e inglés para identificar términos dominantes.
+</p>
+
+<div class="grid-2">
+
+<div class="subcard">
+
+### Top 10 términos
+
+```{r}
+plot_ly(
+  data = top_10_palabras,
+  x = ~n,
+  y = ~termino,
+  type = "bar",
+  orientation = "h",
+  text = ~n,
+  textposition = "outside",
+  hovertemplate = paste(
+    "<b>Término:</b> %{y}<br>",
+    "<b>Frecuencia:</b> %{x}<extra></extra>"
+  ),
+  marker = list(
+    color = c(
+      "#004d2e", "#006b3f", "#178f5d", "#35a873", "#5cc08b",
+      "#82d3a5", "#a7e3bf", "#c8efd6", "#e0f7e9", "#f1fbf5"
+    ),
+    line = list(color = "#ffffff", width = 1)
+  )
+) %>%
+  layout(
+    xaxis = list(title = "Frecuencia", zeroline = FALSE),
+    yaxis = list(title = "", automargin = TRUE),
+    margin = list(l = 110, r = 40, t = 20, b = 45),
+    height = 390,
+    paper_bgcolor = "white",
+    plot_bgcolor = "white"
+  )
+```
+
+</div>
+
+<div class="subcard">
+
+### Top 50 términos
+
+```{r}
+datatable(
+  palabras_frecuentes %>%
+    slice_head(n = 50) %>%
+    rename(
+      Término = palabra,
+      Frecuencia = n
+    ),
+  rownames = FALSE,
+  class = "stripe hover compact",
+  options = list(
+    pageLength = 8,
+    scrollX = TRUE,
+    autoWidth = TRUE,
+    dom = "tip"
+  )
+)
+```
+
+</div>
+
+</div>
+
+</div>
+
+<div class="section-box">
+
+## Comparación por medio
+
+<p class="desc">
+Esta visualización permite observar qué términos se repiten con mayor frecuencia en cada fuente periodística.
+</p>
+
+<div class="subcard">
+
+### Términos dominantes por medio
+
+```{r}
+plot_ly(
+  data = top_terminos_medio,
+  x = ~n,
+  y = ~etiqueta,
+  type = "bar",
+  orientation = "h",
+  color = ~medio,
+  text = ~n,
+  textposition = "outside",
+  hovertemplate = paste(
+    "<b>Término y medio:</b> %{y}<br>",
+    "<b>Frecuencia:</b> %{x}<extra></extra>"
+  )
+) %>%
+  layout(
+    xaxis = list(title = "Frecuencia"),
+    yaxis = list(title = "", automargin = TRUE),
+    barmode = "group",
+    legend = list(
+      orientation = "h",
+      x = 0.02,
+      y = -0.18
+    ),
+    margin = list(l = 170, r = 40, t = 20, b = 80),
+    height = 500,
+    paper_bgcolor = "white",
+    plot_bgcolor = "white"
+  )
+```
+
+</div>
+
+</div>
+
+<div class="section-box">
+
+## Evolución temporal
+
+<p class="desc">
+Distribución mensual de las noticias recolectadas según la fecha de publicación disponible.
+</p>
+
+<div class="subcard">
+
+### Noticias en el tiempo
+
+```{r}
+if (nrow(datos_tiempo) > 0) {
+  plot_ly(
+    data = datos_tiempo,
+    x = ~mes,
+    y = ~noticias,
+    color = ~medio,
+    type = "scatter",
+    mode = "lines+markers",
+    hovertemplate = paste(
+      "<b>Mes:</b> %{x|%d/%m/%Y}<br>",
+      "<b>Noticias:</b> %{y}<extra></extra>"
+    )
+  ) %>%
+    layout(
+      xaxis = list(title = "Fecha"),
+      yaxis = list(title = "Cantidad de noticias", rangemode = "tozero"),
+      margin = list(l = 55, r = 35, t = 20, b = 55),
+      height = 330,
+      paper_bgcolor = "white",
+      plot_bgcolor = "white"
+    )
+} else {
+  plot_ly() %>%
+    layout(
+      annotations = list(
+        text = "No se encontraron fechas válidas en la base.",
+        x = 0.5,
+        y = 0.5,
+        showarrow = FALSE
+      ),
+      height = 330
+    )
+}
+```
+
+</div>
+
+</div>
+
+<div class="section-box">
+
+## Exploración de noticias
+
+<p class="desc">
+Tabla interactiva para revisar títulos, medios, fechas, resúmenes y enlaces de las noticias recolectadas.
+</p>
+
+<div class="subcard">
+
+```{r}
+datatable(
+  datos %>%
+    transmute(
+      Título = titulo_corto,
+      Medio = medio,
+      Fecha = as.character(fecha),
+      Resumen = resumen_corto,
+      Enlace = if_else(
+        !is.na(url) & url != "",
+        paste0("<a href='", url, "' target='_blank'>Abrir</a>"),
+        "Sin enlace"
+      )
+    ),
+  rownames = FALSE,
+  escape = FALSE,
+  filter = "top",
+  class = "stripe hover compact",
+  options = list(
+    pageLength = 8,
+    scrollX = TRUE,
+    autoWidth = TRUE,
+    dom = "tip"
+  )
+)
+```
+
+</div>
+
+</div>
+
+<div class="section-box">
+
+## Interpretación general
+
+El dashboard permite observar que las noticias recolectadas se distribuyen entre fuentes nacionales e internacionales, lo que permite comparar el tratamiento discursivo de temas políticos desde medios distintos. La frecuencia de términos ayuda a identificar palabras dominantes dentro del corpus, mientras que la comparación por medio permite reconocer diferencias en énfasis temático.
+
+La tabla final funciona como una herramienta de trazabilidad porque permite revisar los títulos, fechas, resúmenes y enlaces de las noticias que alimentan el análisis. De esta manera, el dashboard no solo presenta resultados gráficos, sino que también conserva la posibilidad de volver a las fuentes originales.
+
+</div>
+
+<div class="footer">
+Generado automáticamente con Quarto | Proyecto LP2 | Dashboard de noticias políticas
+</div>
