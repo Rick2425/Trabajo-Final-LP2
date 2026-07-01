@@ -15,7 +15,6 @@
 <ul>
   <li>Cardenas Panduro, Ricardo Gabriel (Rick2425) (20241376)</li>
   <li>Meza Mitma, Liz Maritza (MezaLiz96) (20220771)</li>
-  <li>Poma Parisuaña Josué Maximo (PomaJosue) (20211824) </li>
   <li>Quispe Garcia, Francisco Alberto (panchop35) (20240729)</li>
   <li>Tuppia Paitan, Joaquin Francisco (JTPXD) (20241405)</li>
 </ul>
